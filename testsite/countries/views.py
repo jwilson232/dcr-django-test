@@ -1,8 +1,15 @@
+from countries.models import Country
+from django.db.models import Count, F, Sum
 from django.http import JsonResponse
 
 
 def stats(request):
-    # TODO - Provide name, number_countries and total_population for each region
-    response = {"regions": []}
+    """Get statistics about countries by region"""
 
-    return JsonResponse(response)
+    regions = (
+        Country.objects.values(region_name=F("region__name"))
+        .annotate(number_countries=Count("id"), total_population=Sum("population"))
+        .order_by("region__name")
+    )
+
+    return JsonResponse({"regions": list(regions)})

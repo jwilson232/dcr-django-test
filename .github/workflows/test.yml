@@ -1,0 +1,43 @@
+name: Test Django Countries Application
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "*/*"
+      - "main"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          rm -rf .venv
+          python3 -m venv .venv
+          source .venv/bin/activate
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run isort
+        run: |
+          source .venv/bin/activate
+          isort . --check --diff
+
+      - name: Run black
+        run: |
+          source .venv/bin/activate
+          black . --check --diff
+
+      - name: Run tests
+        run: |
+          source .venv/bin/activate
+          python testsite/manage.py test countries --verbosity=2 --failfast

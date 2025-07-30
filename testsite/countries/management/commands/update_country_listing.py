@@ -1,23 +1,22 @@
-import json
-import os
-
-from django.conf import settings
-from django.core.management.base import BaseCommand
-
+import requests
 from countries.models import Country, Region
+from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
-    help = "Loads country data from a JSON file."
+    help = "Loads country data from a Google Cloud Storage bucket"
 
-    IMPORT_FILE = os.path.join(settings.BASE_DIR, "..", "data", "countries.json")
+    URL = "https://storage.googleapis.com/dcr-django-test/countries.json"
 
     def get_data(self):
-        with open(self.IMPORT_FILE) as f:
-            data = json.load(f)
+        """Fetches country data from the specified URL"""
+        res = requests.get(self.URL)
+        res.raise_for_status()
+        data = res.json()
         return data
 
     def handle(self, *args, **options):
+        """Main command handler to load country data"""
         data = self.get_data()
         for row in data:
             region, region_created = Region.objects.get_or_create(name=row["region"])
@@ -31,6 +30,7 @@ class Command(BaseCommand):
                     "alpha2Code": row["alpha2Code"],
                     "alpha3Code": row["alpha3Code"],
                     "population": row["population"],
+                    "topLevelDomain": row["topLevelDomain"],
                     "region": region,
                 },
             )
